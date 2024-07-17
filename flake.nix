@@ -6,7 +6,7 @@
 		packages = (nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed) (system: let pkgs = nixpkgs.legacyPackages.${system}; in {
 			default = pkgs.writeShellApplication {
 				name = "manage-image-lock.sh";
-				runtimeInputs = with pkgs; [ docker jq ];
+				runtimeInputs = with pkgs; [ jq manifest-tool ];
 				text = builtins.readFile ./manage.sh;
 			};
 		});

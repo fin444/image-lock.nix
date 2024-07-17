@@ -18,7 +18,7 @@ function isInLock() {
 
 function update() {
 	local digest
-	digest=$(docker manifest inspect "$1" | jq -r '.manifests.[0].digest')
+	digest=$(manifest-tool inspect --raw "$1:latest" | jq -r '.digest')
 	if [[ $(echo "$working" | jq -r ".\"$1\".digest") != "$digest" ]]; then
 		echo "$1 updated to $digest"
 		working=$(echo "$working" | jq ".\"$1\".digest = \"$digest\"")
