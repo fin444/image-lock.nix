@@ -18,7 +18,7 @@ All data is stored in `images.lock` in your working directory.
 
 ```
 # add new images
-nix run --no-write-lock-file github:fin444/image-lock.nix add postgres pghcr.io/paperless-ngx/paperless-ngx
+nix run --no-write-lock-file github:fin444/image-lock.nix add postgres ghcr.io/paperless-ngx/paperless-ngx
 
 # update images
 nix run --no-write-lock-file github:fin444/image-lock.nix update
