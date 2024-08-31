@@ -1,3 +1,5 @@
+set -eo pipefail
+
 function help() {
 	cat << EOM
 
@@ -7,6 +9,7 @@ Commands:
   help      Show usage information.
   update    If no arguments given, update all images. Otherwise, update all images given in arguments.
   add       Add all images given in arguments, and update them to the latest version.
+              Use --store to add the image to the nix store instead of having it pulled at runtime.
   rm        Remove all images given in arguments.
 EOM
 	exit
@@ -19,10 +22,21 @@ function isInLock() {
 function update() {
 	local digest
 	digest=$(manifest-tool inspect --raw "$1:latest" | jq -r '.digest')
-	if [[ $(echo "$working" | jq -r ".\"$1\".digest") != "$digest" ]]; then
-		echo "$1 updated to $digest"
-		working=$(echo "$working" | jq ".\"$1\".digest = \"$digest\"")
-		changed=true
+	if [[ $(echo "$working" | jq -r ".\"$1\".imageDigest") = "null" ]]; then
+		if [[ $(echo "$working" | jq -r ".\"$1\".digest") != "$digest" ]]; then
+			working=$(echo "$working" | jq ".\"$1\".digest = \"$digest\"")
+			echo "$1 updated to $digest"
+			changed=true
+		fi
+	else
+		if [[ $(echo "$working" | jq -r ".\"$1\".imageDigest") != "$digest" ]]; then
+			local prefetch
+			echo "Prefetching $1, this may take a minute..."
+			prefetch=$(nix-prefetch-docker "$1" --json --quiet)
+			working=$(echo "$working" | jq ".\"$1\" = $prefetch")
+			echo "$1 updated to $digest"
+			changed=true
+		fi
 	fi
 }
 
@@ -57,10 +71,19 @@ case "$1" in
 	;;
 	"add")
 		shift
+		store=false
+		for arg in "$@"; do
+			if [[ "$arg" = "--store" ]]; then
+				store=true
+			fi
+		done
 		for image in "$@"; do
 			if isInLock "$image"; then
 				echo "$image is already in images.lock"
-			else
+			elif [[ "${image::1}" != "-" ]]; then
+				if [[ $store = true ]]; then
+					working=$(echo "$working" | jq ".\"$image\".imageDigest = \"\"")
+				fi
 				update "$image"
 			fi
 		done

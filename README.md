@@ -29,13 +29,25 @@ nix run --no-write-lock-file github:fin444/image-lock.nix help
 
 Unfortunately, `--no-write-lock-file` is necessary to allow the flake to follow your local nixpkgs.
 
-### Use in Configuration
+### Configuration
 
 ```nix
-environment.image-lock.lockFile = ./images.lock;
+environment.image-lock = {
+  lockFile = ./images.lock;
+  containers = {
+    paperless = "pghcr.io/paperless-ngx/paperless-ngx";
+    postgresql = "postgres";
+  };
+};
 
-virtualisation.oci-containers.paperless.image =
-  config.environment.image-lock.images."pghcr.io/paperless-ngx/paperless-ngx";
+virtualisation.oci-containers = {
+  paperless = {
+    # more container config
+  };
+  postgresql = {
+    # more container config
+  };
+};
 ```
 
 ### Flake Input
@@ -58,3 +70,14 @@ virtualisation.oci-containers.paperless.image =
   };
 }
 ```
+
+### Prefetching
+
+There is also the option to include images in the nix store instead of pulling them from the repository at runtime.
+
+To do this, run the add command with `--store`, and the image(s) will be set to this method.
+
+Drawbacks:
+- Adding/updating images will take longer, and require enough memory to hold the image (as it is being hashed for the store)
+- Images will take up space twice: once in the store, and once in `/var/lib/docker`
+- When no longer needed, images need to be garbage collected both in the store, and from Docker
