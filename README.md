@@ -38,6 +38,7 @@ environment.image-lock = {
     paperless = "pghcr.io/paperless-ngx/paperless-ngx";
     postgresql = "postgres";
   };
+  prune = true; # deletes all loaded images that have a different version than images.lock
 };
 
 virtualisation.oci-containers = {
@@ -80,4 +81,4 @@ To do this, run the add command with `--store`, and the image(s) will be set to 
 Drawbacks:
 - Adding/updating images will take longer, and require enough memory to hold the image (as it is being hashed for the store)
 - Images will take up space twice: once in the store, and once in `/var/lib/docker`
-- When no longer needed, images need to be garbage collected both in the store, and from Docker
+- When no longer needed, images need to be garbage collected both in the store, and from Docker (unless you set `prune = true;`)

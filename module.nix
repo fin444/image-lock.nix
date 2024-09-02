@@ -8,6 +8,7 @@
 				freeformType = types.attrsOf types.str;
 			};
 		};
+		prune = mkEnableOption "";
 	};
 
 	config = let
@@ -26,5 +27,33 @@
 				imageFile = pkgs.dockerTools.pullImage data."${value}";
 			}
 		) cfg.containers;
+
+		# pruning
+		systemd.services =
+			let backend = config.virtualisation.oci-containers.backend;
+		in lib.mkIf cfg.prune (lib.attrsets.mapAttrs' (name: value:
+			lib.attrsets.nameValuePair "${backend}-${name}-prune" (let
+				digest = if (lib.attrsets.hasAttr "digest" data."${value}") then data."${value}".digest else data."${value}".imageDigest;
+			in {
+				description = "Prune old images of ${value}";
+				requiredBy = [ "${backend}-${name}.service" ];
+				before = [ "${backend}-${name}.service" ];
+				path = config.systemd.services."${backend}-${name}".path; # get ${backend} in the path
+				serviceConfig = {
+					ExecStart = "${pkgs.writeShellApplication {
+						name = "${backend}-${name}-prune";
+						runtimeInputs = with pkgs; [ gawk ];
+						text = ''
+							images="$(${backend} images --digests | { grep '${value}' || true; } | { grep -v '${digest}' || true; } | awk '{print $4}')"
+							if [[ "$images" != "" ]]; then
+								# shellcheck disable=SC2086
+								${backend} rmi $images
+							fi
+						'';
+					}}/bin/${backend}-${name}-prune";
+					Type = "oneshot";
+				};
+			})
+		) cfg.containers);
 	};
 }
