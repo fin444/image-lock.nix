@@ -44,7 +44,7 @@
 						name = "${backend}-${name}-prune";
 						runtimeInputs = with pkgs; [ gawk ];
 						text = ''
-							images="$(${backend} images --digests | { grep '${value}' || true; } | { grep -v '${digest}' || true; } | awk '{print $4}')"
+							images="$(${backend} images --digests | { grep '^${value} ' || true; } | { grep -v '${digest}' || true; } | awk '{print $4}')"
 							if [[ "$images" != "" ]]; then
 								# shellcheck disable=SC2086
 								${backend} rmi $images
