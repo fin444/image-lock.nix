@@ -41,7 +41,7 @@ environment.image-lock = {
   prune = true; # deletes all loaded images that have a different version than images.lock
 };
 
-virtualisation.oci-containers = {
+virtualisation.oci-containers.containers = {
   paperless = {
     # more container config
   };
