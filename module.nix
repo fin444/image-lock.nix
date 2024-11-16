@@ -23,7 +23,7 @@
 			if (lib.attrsets.hasAttr "digest" data."${value}") then {
 				image = "${value}@${data."${value}".digest}";
 			} else {
-				image = data."${value}".finalImageName;
+				image = "${data."${value}".finalImageName}:${data."${value}".finalImageTag}";
 				imageFile = pkgs.dockerTools.pullImage data."${value}";
 			}
 		) cfg.containers;

@@ -9,6 +9,7 @@ Commands:
   help      Show usage information.
   update    If no arguments given, update all images. Otherwise, update all images given in arguments.
   add       Add all images given in arguments, and update them to the latest version.
+              If you include a tag, it will always pull the latest image with that tag.
               Use --store to add the image to the nix store instead of having it pulled at runtime.
   rm        Remove all images given in arguments.
 EOM
@@ -20,8 +21,10 @@ function isInLock() {
 }
 
 function update() {
+	local tag
+	tag=$(echo "$working" | jq -r ".\"$1\".finalImageTag")
 	local digest
-	digest=$(manifest-tool inspect --raw "$1:latest" | jq -r '.digest')
+	digest=$(manifest-tool inspect --raw "$1:$tag" | jq -r '.digest')
 	if [[ $(echo "$working" | jq -r ".\"$1\".imageDigest") = "null" ]]; then
 		if [[ $(echo "$working" | jq -r ".\"$1\".digest") != "$digest" ]]; then
 			working=$(echo "$working" | jq ".\"$1\".digest = \"$digest\"")
@@ -32,7 +35,7 @@ function update() {
 		if [[ $(echo "$working" | jq -r ".\"$1\".imageDigest") != "$digest" ]]; then
 			local prefetch
 			echo "Prefetching $1, this may take a minute..."
-			prefetch=$(nix-prefetch-docker "$1" --json --quiet)
+			prefetch=$(nix-prefetch-docker "$1" "$tag" --json --quiet)
 			working=$(echo "$working" | jq ".\"$1\" = $prefetch")
 			echo "$1 updated to $digest"
 			changed=true
@@ -80,12 +83,27 @@ case "$1" in
 		done
 		# loop images
 		for image in "$@"; do
+			# separate tag and image
+			tag=""
+			if echo "$image" | grep -q ':'; then
+				# shellcheck disable=SC2001
+				tag=$(echo "$image" | sed 's/.*://')
+				# shellcheck disable=SC2001
+				image=$(echo "$image" | sed 's/:.*//')
+			fi
+			# add image
 			if isInLock "$image"; then
 				echo "$image is already in images.lock"
 			elif [[ "${image::1}" != "-" ]]; then
 				# set up prefetch
 				if [[ $store = true ]]; then
 					working=$(echo "$working" | jq ".\"$image\".imageDigest = \"\"")
+				fi
+				# set up tag
+				if [[ "$tag" != "" ]]; then
+					working=$(echo "$working" | jq ".\"$image\".finalImageTag = \"$tag\"")
+				else
+					working=$(echo "$working" | jq ".\"$image\".finalImageTag = \"latest\"")
 				fi
 				# fetch info
 				update "$image"
