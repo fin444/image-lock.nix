@@ -7,6 +7,7 @@
 			type = types.submodule {
 				freeformType = types.attrsOf types.str;
 			};
+			default = {};
 		};
 		prune = mkEnableOption "";
 	};
@@ -15,9 +16,6 @@
 		data = (builtins.fromJSON (builtins.readFile cfg.lockFile));
 		cfg = config.environment.image-lock;
 	in {
-		# if there are no containers defined, it'll throw an error without this
-		environment.image-lock.containers = {};
-
 		# define images for all containers
 		virtualisation.oci-containers.containers = builtins.mapAttrs (name: value:
 			if (lib.attrsets.hasAttr "digest" data."${value}") then {
