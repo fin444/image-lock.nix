@@ -6,7 +6,7 @@ Updating your whole setup is as easy as:
 
 ```
 nix flake update
-nix run --no-write-lock-file github:fin444/image-lock.nix update
+nix run --no-write-lock-file github:fin444/image-lock.nix -- update
 nixos-rebuild switch
 ```
 
@@ -18,13 +18,13 @@ All data is stored in `images.lock` in your working directory.
 
 ```
 # add new images
-nix run --no-write-lock-file github:fin444/image-lock.nix add postgres ghcr.io/paperless-ngx/paperless-ngx
+nix run --no-write-lock-file github:fin444/image-lock.nix -- add postgres ghcr.io/paperless-ngx/paperless-ngx
 
 # update images
-nix run --no-write-lock-file github:fin444/image-lock.nix update
+nix run --no-write-lock-file github:fin444/image-lock.nix -- update
 
 # see all commands
-nix run --no-write-lock-file github:fin444/image-lock.nix help
+nix run --no-write-lock-file github:fin444/image-lock.nix -- help
 ```
 
 Unfortunately, `--no-write-lock-file` is necessary to allow the flake to follow your local nixpkgs.
