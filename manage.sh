@@ -71,19 +71,23 @@ case "$1" in
 	;;
 	"add")
 		shift
+		# check whether to place images into store
 		store=false
 		for arg in "$@"; do
 			if [[ "$arg" = "--store" ]]; then
 				store=true
 			fi
 		done
+		# loop images
 		for image in "$@"; do
 			if isInLock "$image"; then
 				echo "$image is already in images.lock"
 			elif [[ "${image::1}" != "-" ]]; then
+				# set up prefetch
 				if [[ $store = true ]]; then
 					working=$(echo "$working" | jq ".\"$image\".imageDigest = \"\"")
 				fi
+				# fetch info
 				update "$image"
 			fi
 		done
