@@ -23,6 +23,9 @@ function isInLock() {
 function update() {
 	local tag
 	tag=$(echo "$working" | jq -r ".\"$1\".finalImageTag")
+	if [[ "$tag" = "null" ]]; then
+		tag="latest"
+	fi
 	local digest
 	digest=$(manifest-tool inspect --raw "$1:$tag" | jq -r '.digest')
 	if [[ $(echo "$working" | jq -r ".\"$1\".imageDigest") = "null" ]]; then
