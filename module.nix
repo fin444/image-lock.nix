@@ -38,7 +38,7 @@
 				before = [ "${backend}-${name}.service" ];
 				path = config.systemd.services."${backend}-${name}".path; # get ${backend} in the path
 				serviceConfig = {
-					ExecStart = "${pkgs.writeShellApplication {
+					ExecStart = lib.getExe (pkgs.writeShellApplication {
 						name = "${backend}-${name}-prune";
 						runtimeInputs = with pkgs; [ gawk ];
 						text = ''
@@ -48,7 +48,7 @@
 								${backend} rmi $images
 							fi
 						'';
-					}}/bin/${backend}-${name}-prune";
+					});
 					Type = "oneshot";
 				};
 			})
